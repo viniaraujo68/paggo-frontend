@@ -16,8 +16,9 @@ interface Document {
 
 interface Message {
   id: string;
-  text: string;
-  timestamp: string;
+  content: string;
+  order: number;
+  sentAt: string;
 }
 
 export default function ImageDetails() {
@@ -29,6 +30,7 @@ export default function ImageDetails() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (imageId) {
@@ -66,9 +68,11 @@ export default function ImageDetails() {
 
   const fetchMessages = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/messages`);
+      const response = await fetch(`http://localhost:3001/message/${imageId}`);
       if (!response.ok) throw new Error("Failed to fetch messages");
-      setMessages(await response.json());
+      const data = await response.json();
+      console.log('Received messages:', data);
+      setMessages(data);
     } catch (error) {
       console.error("Error fetching messages:", error);
     }
@@ -78,10 +82,10 @@ export default function ImageDetails() {
     if (!newMessage.trim()) return;
 
     try {
-      const response = await fetch(`http://localhost:3001/messages`, {
+      const response = await fetch(`http://localhost:3001/message/create/${imageId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: newMessage }),
+        body: JSON.stringify({ content: newMessage, order: messages.length + 1 }),
       });
 
       if (!response.ok) throw new Error("Failed to send message");
@@ -95,7 +99,9 @@ export default function ImageDetails() {
   };
 
   const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+	if (chatContainerRef.current) {
+	  chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+	}
   };
 
   useEffect(() => {
@@ -160,9 +166,7 @@ export default function ImageDetails() {
               <div className="space-y-1">
                 <h1 className="text-2xl font-bold text-gray-100">{document.filename}</h1>
                 <div className="flex items-center gap-2 text-sm text-gray-400">
-                  <span>ID: {document.id}</span>
-                  <span>•</span>
-                  <span>Created: {document.createdAt}</span>
+                  <span>Created at: {document.createdAt}</span>
                 </div>
               </div>
 
@@ -192,16 +196,23 @@ export default function ImageDetails() {
             <p className="text-sm text-gray-400 mt-1">Ask questions about this document</p>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-4">
             {messages.map((message) => (
-              <div key={message.id} className="flex items-start gap-3">
-                <div className="flex-1">
-                  <div className="bg-gray-700 rounded-xl p-4 transition-colors hover:bg-gray-600">
-                    <p className="text-gray-100">{message.text}</p>
+              <div
+                key={message.id}
+                className={`flex items-start gap-3 ${message.order % 2 === 0 ? 'justify-start' : 'justify-end'}`}
+              >
+                <div className="flex-1 max-w-xs">
+                  <div className={`bg-gray-700 rounded-xl p-4 transition-colors hover:bg-gray-600 ${message.order % 2 === 0 ? 'ml-0' : 'ml-auto'}`}>
+                    <p className="text-gray-100">{message.content}</p>
                     <p className="text-xs text-gray-400 mt-2">
-                      {new Date(message.timestamp).toLocaleTimeString([], {
+                      {new Date(message.sentAt).toLocaleTimeString([], {
                         hour: '2-digit',
-                        minute: '2-digit'
+                        minute: '2-digit',
+                      })} - {new Date(message.sentAt).toLocaleDateString([], {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: '2-digit',
                       })}
                     </p>
                   </div>
@@ -217,7 +228,7 @@ export default function ImageDetails() {
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Type your message..."
                 className="flex-1 px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-100 outline-none transition-all placeholder-gray-400"
               />
