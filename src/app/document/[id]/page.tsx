@@ -21,7 +21,7 @@ interface Message {
   sentAt: string;
 }
 
-export default function ImageDetails() {
+export default function DocumentDetails() {
   const params = useParams();
   const imageId = params?.id as string;
   const [document, setDocument] = useState<Document | null>(null);
@@ -29,6 +29,7 @@ export default function ImageDetails() {
   const [error, setError] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [isFetchingLLMResponse, setIsFetchingLLMResponse] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -42,10 +43,9 @@ export default function ImageDetails() {
     try {
       const response = await fetch(`http://localhost:3001/document/${id}`);
       if (!response.ok) throw new Error("Failed to fetch document");
-      
+
       const data = await response.json();
-      
-      // Convert image bytes to URL
+
       const uint8Array = new Uint8Array(Object.values(data.image));
       const blob = new Blob([uint8Array], { type: "image/png" });
       const imageUrl = URL.createObjectURL(blob);
@@ -79,29 +79,41 @@ export default function ImageDetails() {
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
-
-    try {
-      const response = await fetch(`http://localhost:3001/message/create/${imageId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newMessage, order: messages.length + 1 }),
-      });
-
-      if (!response.ok) throw new Error("Failed to send message");
-      
-      const message = await response.json();
-      setMessages(prev => [...prev, message]);
-      setNewMessage("");
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
+	if (!newMessage.trim()) return;
+  
+	// Create a message object to be added immediately to the chat
+	const newMessageData: Message = {
+	  id: Date.now().toString(),
+	  content: newMessage,
+	  order: messages.length + 1,
+	  sentAt: new Date().toISOString(),
+	};
+  
+	setMessages((prevMessages) => [...prevMessages, newMessageData]);
+	setIsFetchingLLMResponse(true);
+	setNewMessage("");
+  
+	try {
+	  const response = await fetch(`http://localhost:3001/message/create/${imageId}`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ content: newMessage, order: messages.length + 1 }),
+	  });
+  
+	  if (!response.ok) throw new Error("Failed to send message");
+    
+	  fetchMessages();
+	  setIsFetchingLLMResponse(false);
+	  
+	} catch (error) {
+	  console.error("Error sending message:", error);
+	}
   };
 
   const scrollToBottom = () => {
-	if (chatContainerRef.current) {
-	  chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-	}
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   };
 
   useEffect(() => {
@@ -196,29 +208,36 @@ export default function ImageDetails() {
             <p className="text-sm text-gray-400 mt-1">Ask questions about this document</p>
           </div>
 
-          <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex items-start gap-3 ${message.order % 2 === 0 ? 'justify-start' : 'justify-end'}`}
-              >
-                <div className="flex-1 max-w-xs">
-                  <div className={`bg-gray-700 rounded-xl p-4 transition-colors hover:bg-gray-600 ${message.order % 2 === 0 ? 'ml-0' : 'ml-auto'}`}>
-                    <p className="text-gray-100">{message.content}</p>
-                    <p className="text-xs text-gray-400 mt-2">
-                      {new Date(message.sentAt).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })} - {new Date(message.sentAt).toLocaleDateString([], {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: '2-digit',
-                      })}
-                    </p>
+          <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+            {messages
+              .sort((a, b) => a.order - b.order)
+              .map((message) => (
+                <div
+                  key={message.id || `${message.order}`}
+                  className={`flex items-start gap-3 ${message.order % 2 === 0 ? 'justify-start' : 'justify-end'}`}
+                >
+                  <div className="flex-1 max-w-xs">
+                    <div className={`bg-gray-700 rounded-xl p-4 transition-colors hover:bg-gray-600 ${message.order % 2 === 0 ? 'ml-0' : 'ml-auto'}`}>
+                      <p className="text-gray-100">{message.content}</p>
+                      <p className="text-xs text-gray-400 mt-2">
+                        {message.sentAt && `${new Date(message.sentAt).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })} - ${new Date(message.sentAt).toLocaleDateString([], {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: '2-digit',
+                        })}`}
+                      </p>
+                    </div>
                   </div>
                 </div>
+              ))}
+            {isFetchingLLMResponse && (
+              <div className="flex justify-center">
+                <div className="animate-spin h-6 w-6 border-4 border-blue-500 rounded-full border-t-transparent"></div>
               </div>
-            ))}
+            )}
             <div ref={chatEndRef} />
           </div>
 
