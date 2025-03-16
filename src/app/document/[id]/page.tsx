@@ -198,7 +198,7 @@ export default function DocumentDetails() {
   }, []);
 
   if (loading) {
-    return <Loading />;
+    return <Loading message="Loading Document Details..." />;
   }
 
   if (error || !document) {

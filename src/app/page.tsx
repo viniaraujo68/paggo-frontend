@@ -44,7 +44,7 @@ export default function Home() {
   };
 
   if (loading) {
-    return <Loading />;
+    return <Loading message="Loading all documents..." />;
   }
 
   if (error) {
