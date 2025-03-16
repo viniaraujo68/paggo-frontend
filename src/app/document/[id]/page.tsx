@@ -2,26 +2,13 @@
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useState, useRef } from "react";
-import Image from "next/image";
-import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { useEffect, useState } from "react";
 import jsPDF from "jspdf";
-
-interface Document {
-  id: string;
-  filename: string;
-  createdAt: string;
-  summary: string;
-  text: string;
-  imageUrl: string;
-}
-
-interface Message {
-  id: string;
-  content: string;
-  order: number;
-  sentAt: string;
-}
+import DocumentSection from "../../../components/DocumentSection";
+import ChatSection from "../../../components/ChatSection";
+import Loading from "../../../components/Loading";
+import CustomError from "../../../components/CustomError";
+import { Document, Message } from "../../../types/types";
 
 export default function DocumentDetails() {
   const params = useParams();
@@ -32,8 +19,6 @@ export default function DocumentDetails() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isFetchingLLMResponse, setIsFetchingLLMResponse] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (imageId) {
@@ -136,7 +121,7 @@ export default function DocumentDetails() {
     }
 
     doc.save(`${document.filename}-report.pdf`);
-};
+  };
 
   const fetchDocumentById = async (id: string) => {
     try {
@@ -178,79 +163,46 @@ export default function DocumentDetails() {
   };
 
   const handleSendMessage = async () => {
-	if (!newMessage.trim()) return;
-  
-	// Create a message object to be added immediately to the chat
-	const newMessageData: Message = {
-	  id: Date.now().toString(),
-	  content: newMessage,
-	  order: messages.length + 1,
-	  sentAt: new Date().toISOString(),
-	};
-  
-	setMessages((prevMessages) => [...prevMessages, newMessageData]);
-	setIsFetchingLLMResponse(true);
-	setNewMessage("");
-  
-	try {
-	  const response = await fetch(`http://localhost:3001/message/create/${imageId}`, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ content: newMessage, order: messages.length + 1 }),
-	  });
-  
-	  if (!response.ok) throw new Error("Failed to send message");
-    
-	  fetchMessages();
-	  setIsFetchingLLMResponse(false);
-	  
-	} catch (error) {
-	  console.error("Error sending message:", error);
-	}
-  };
+    if (!newMessage.trim()) return;
 
-  const scrollToBottom = () => {
-	if (chatContainerRef.current) {
-	  chatContainerRef.current.scrollTo({
-		top: chatContainerRef.current.scrollHeight,
-		behavior: 'smooth',
-	  });
-	}
+    const newMessageData: Message = {
+      id: Date.now().toString(),
+      content: newMessage,
+      order: messages.length + 1,
+      sentAt: new Date().toISOString(),
+    };
+
+    setMessages((prevMessages) => [...prevMessages, newMessageData]);
+    setIsFetchingLLMResponse(true);
+    setNewMessage("");
+
+    try {
+      const response = await fetch(`http://localhost:3001/message/create/${imageId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newMessage, order: messages.length + 1 }),
+      });
+
+      if (!response.ok) throw new Error("Failed to send message");
+
+      fetchMessages();
+      setIsFetchingLLMResponse(false);
+
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
   };
 
   useEffect(() => {
     fetchMessages();
   }, []);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="flex items-center gap-3 text-gray-400">
-          <div className="animate-spin h-6 w-6 border-4 border-blue-500 rounded-full border-t-transparent"></div>
-          Loading document details...
-        </div>
-      </div>
-    );
+    return <Loading />;
   }
 
   if (error || !document) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 gap-5">
-        <div className="text-red-400 text-lg font-medium">
-          {error || "Document not found"}
-        </div>
-        <Link
-          href="/"
-          className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-        >
-          ← Return to Home
-        </Link>
-      </div>
-    );
+    return <CustomError error={error} />;
   }
 
   return (
@@ -263,113 +215,14 @@ export default function DocumentDetails() {
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
-        {/* Document Section */}
-        <div className="space-y-6">
-          <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
-            <div className="relative aspect-video bg-gray-700 rounded-lg overflow-hidden">
-              <Image
-                src={document.imageUrl}
-                alt={document.filename}
-                fill
-                className="object-contain"
-                priority
-              />
-            </div>
-
-            <div className="mt-6 space-y-4">
-              <div className="space-y-1">
-                <h1 className="text-2xl font-bold text-gray-100">{document.filename}</h1>
-                <div className="flex items-center gap-2 text-sm text-gray-400">
-                  <span>Created at: {document.createdAt}</span>
-				  <button
-      				onClick={handleDownloadPDF}
-      				className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-    				>
-      				<ArrowDownTrayIcon className="w-5 h-5" />
-      				<span className="hidden sm:inline">Download PDF</span>
-    			  </button>
-                </div>
-              </div>
-
-              {document.summary && (
-                <div className="pt-4 border-t border-gray-700">
-                  <h2 className="text-lg font-semibold text-gray-200 mb-2">Summary</h2>
-                  <p className="text-gray-300 leading-relaxed">{document.summary}</p>
-                </div>
-              )}
-
-              {document.text && (
-                <div className="pt-4 border-t border-gray-700">
-                  <h2 className="text-lg font-semibold text-gray-200 mb-2">Full Text</h2>
-                  <pre className="text-gray-300 whitespace-pre-wrap font-sans leading-relaxed">
-                    {document.text}
-                  </pre>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Chat Section */}
-        <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 h-[calc(100vh-160px)] flex flex-col">
-          <div className="p-6 border-b border-gray-700">
-            <h2 className="text-xl font-semibold text-gray-200">Document Chat</h2>
-            <p className="text-sm text-gray-400 mt-1">Ask questions about this document</p>
-          </div>
-
-          <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-            {messages
-              .sort((a, b) => a.order - b.order)
-              .map((message) => (
-                <div
-                  key={message.id || `${message.order}`}
-                  className={`flex items-start gap-3 ${message.order % 2 === 0 ? 'justify-start' : 'justify-end'}`}
-                >
-                  <div className="flex-1 max-w-xs">
-                    <div className={`bg-gray-700 rounded-xl p-4 transition-colors hover:bg-gray-600 ${message.order % 2 === 0 ? 'ml-0' : 'ml-auto'}`}>
-                      <p className="text-gray-100">{message.content}</p>
-                      <p className="text-xs text-gray-400 mt-2">
-                        {message.sentAt && `${new Date(message.sentAt).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })} - ${new Date(message.sentAt).toLocaleDateString([], {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: '2-digit',
-                        })}`}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            {isFetchingLLMResponse && (
-              <div className="flex justify-center">
-                <div className="animate-spin h-6 w-6 border-4 border-blue-500 rounded-full border-t-transparent"></div>
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          <div className="p-6 border-t border-gray-700">
-            <div className="flex gap-3">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder="Type your message..."
-                className="flex-1 px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-100 outline-none transition-all placeholder-gray-400"
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={!newMessage.trim()}
-                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Send
-              </button>
-            </div>
-          </div>
-        </div>
+        <DocumentSection document={document} handleDownloadPDF={handleDownloadPDF} />
+        <ChatSection
+          messages={messages}
+          newMessage={newMessage}
+          setNewMessage={setNewMessage}
+          handleSendMessage={handleSendMessage}
+          isFetchingLLMResponse={isFetchingLLMResponse}
+        />
       </div>
     </div>
   );
