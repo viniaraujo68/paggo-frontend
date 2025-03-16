@@ -4,6 +4,8 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import jsPDF from "jspdf";
 
 interface Document {
   id: string;
@@ -38,6 +40,103 @@ export default function DocumentDetails() {
       fetchDocumentById(imageId);
     }
   }, [imageId]);
+
+  const handleDownloadPDF = () => {
+    if (!document || !messages) return;
+
+    const doc = new jsPDF();
+    doc.setFont("helvetica");
+
+    doc.setFontSize(18);
+    doc.text(`Document: ${document.filename}`, 20, 20);
+    doc.setFontSize(12);
+    doc.text(`Created at: ${document.createdAt}`, 20, 30);
+
+    let yPosition = 45;
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    const checkPageEnd = (additionalHeight = 0) => {
+        if (yPosition + additionalHeight > pageHeight - 20) {
+            doc.addPage();
+            yPosition = 20;
+        }
+    };
+
+    if (document.imageUrl) {
+        const imgWidth = 100; 
+        const imgHeight = 130;
+        checkPageEnd(imgHeight + 10);
+        doc.addImage(document.imageUrl, "JPEG", 20, yPosition, imgWidth, imgHeight);
+        yPosition += imgHeight + 10;
+    }
+
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 255);
+    checkPageEnd(20);
+    doc.text("Summary:", 20, yPosition);
+    yPosition += 10;
+
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    const splitSummary = doc.splitTextToSize(document.summary || "No summary available", 170);
+    checkPageEnd(splitSummary.length * 5 + 10);
+    doc.text(splitSummary, 20, yPosition);
+    yPosition += splitSummary.length * 5 + 10;
+
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 255);
+    checkPageEnd(20);
+    doc.text("Full Text:", 20, yPosition);
+    yPosition += 10;
+
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    const splitText = doc.splitTextToSize(document.text || "No text available", 170);
+    checkPageEnd(splitText.length * 5 + 10);
+    doc.text(splitText, 20, yPosition);
+    yPosition += splitText.length * 5 + 10;
+
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 255);
+    checkPageEnd(30);
+    doc.text("Chat History", 20, yPosition);
+    yPosition += 10;
+
+    messages
+        .sort((a, b) => a.order - b.order)
+        .forEach((message) => {
+            checkPageEnd(30);
+            doc.setFontSize(12);
+            
+            doc.setTextColor(0, 0, 0);
+            const label = message.order % 2 !== 0 ? "Question" : "Answer";
+
+            doc.text(`${label}:`, 20, yPosition);
+
+            doc.setFontSize(11);
+            const splitMessage = doc.splitTextToSize(message.content, 170);
+            checkPageEnd(splitMessage.length * 5 + 15);
+            doc.text(splitMessage, 20, yPosition + 5);
+
+            const date = new Date(message.sentAt).toLocaleString();
+            doc.setTextColor(156, 163, 175);
+            doc.setFontSize(9);
+            checkPageEnd(10);
+            doc.text(date, 20, yPosition + 5 + splitMessage.length * 5);
+
+            yPosition += 15 + splitMessage.length * 5;
+        });
+
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(10);
+        doc.setTextColor(150);
+        doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.getWidth() - 30, doc.internal.pageSize.getHeight() - 10);
+    }
+
+    doc.save(`${document.filename}-report.pdf`);
+};
 
   const fetchDocumentById = async (id: string) => {
     try {
@@ -111,9 +210,12 @@ export default function DocumentDetails() {
   };
 
   const scrollToBottom = () => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
+	if (chatContainerRef.current) {
+	  chatContainerRef.current.scrollTo({
+		top: chatContainerRef.current.scrollHeight,
+		behavior: 'smooth',
+	  });
+	}
   };
 
   useEffect(() => {
@@ -179,6 +281,13 @@ export default function DocumentDetails() {
                 <h1 className="text-2xl font-bold text-gray-100">{document.filename}</h1>
                 <div className="flex items-center gap-2 text-sm text-gray-400">
                   <span>Created at: {document.createdAt}</span>
+				  <button
+      				onClick={handleDownloadPDF}
+      				className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+    				>
+      				<ArrowDownTrayIcon className="w-5 h-5" />
+      				<span className="hidden sm:inline">Download PDF</span>
+    			  </button>
                 </div>
               </div>
 
