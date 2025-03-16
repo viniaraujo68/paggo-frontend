@@ -18,9 +18,23 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+    if (!token) {
+      router.push("auth/login");
+      return;
+    }
+
+    fetchAllImages();
+  }, []);
+
   const fetchAllImages = async () => {
     try {
-      const response = await fetch("http://localhost:3001/document/all");
+      const response = await fetch("http://localhost:3001/document/all", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
+        },
+      });
       if (response.ok) {
         const data = await response.json();
         setDocuments(data);
@@ -34,10 +48,6 @@ export default function Home() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchAllImages();
-  }, []);
 
   const handleDocumentClick = (id: string) => {
     router.push(`/document/${id}`);
