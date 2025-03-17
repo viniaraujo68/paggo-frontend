@@ -31,7 +31,7 @@ export default function Home() {
 
   const fetchAllImages = async (token: string) => {
     try {
-      const response = await fetch(`${process.env.API_URL}/document/all`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/document/all`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

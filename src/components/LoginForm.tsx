@@ -16,7 +16,8 @@ const LoginForm: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${process.env.API_URL}/auth/login`, {
+      console.log("API URL", process.env.NEXT_PUBLIC_API_URL);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, password }),

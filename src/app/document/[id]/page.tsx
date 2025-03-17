@@ -126,7 +126,7 @@ export default function DocumentDetails() {
 
   const fetchDocumentById = async (id: string) => {
     try {
-      const response = await fetch(`${process.env.API_URL}/document/${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/document/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
         },
@@ -157,7 +157,7 @@ export default function DocumentDetails() {
 
   const fetchMessages = useCallback(async () => {
     try {
-      const response = await fetch(`${process.env.API_URL}/message/${imageId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/message/${imageId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
         },
@@ -172,7 +172,7 @@ export default function DocumentDetails() {
 
   const handleDocumentDelete = async () => {
     try {
-      const response = await fetch(`${process.env.API_URL}/document/delete/${imageId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/document/delete/${imageId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
@@ -204,7 +204,7 @@ export default function DocumentDetails() {
     setNewMessage("");
 
     try {
-      const response = await fetch(`${process.env.API_URL}/message/create/${imageId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/message/create/${imageId}`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
