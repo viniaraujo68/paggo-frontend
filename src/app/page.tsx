@@ -27,7 +27,7 @@ export default function Home() {
     }
     setToken(storedToken);
     fetchAllImages(storedToken);
-  }, []);
+  }, [router]);
 
   const fetchAllImages = async (token: string) => {
     try {

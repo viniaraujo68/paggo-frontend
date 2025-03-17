@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import jsPDF from "jspdf";
 import DocumentSection from "../../../components/DocumentSection";
 import ChatSection from "../../../components/ChatSection";
@@ -155,7 +155,7 @@ export default function DocumentDetails() {
     }
   };
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
       const response = await fetch(`http://localhost:3001/message/${imageId}`, {
         headers: {
@@ -169,7 +169,7 @@ export default function DocumentDetails() {
     } catch (error) {
       console.error("Error fetching messages:", error);
     }
-  };
+  }, [imageId]);
 
   const handleDocumentDelete = async () => {
     try {
@@ -226,7 +226,7 @@ export default function DocumentDetails() {
 
   useEffect(() => {
     fetchMessages();
-  }, []);
+  }, [fetchMessages]);
 
   if (loading) {
     return <Loading message="Loading Document Details..." />;

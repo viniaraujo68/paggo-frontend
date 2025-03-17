@@ -30,7 +30,7 @@ const LoginForm: React.FC = () => {
         const data = await response.json();
         setError(data.message || "Invalid name or password.");
       }
-    } catch (error) {
+    } catch {
       setError("Error logging in.");
     } finally {
       setLoading(false);
