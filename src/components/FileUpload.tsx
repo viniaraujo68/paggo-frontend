@@ -18,6 +18,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
   const handleUpload = async () => {
     if (!selectedFile) return alert("Please select a file first!");
 
+    const token = localStorage.getItem("jwtToken");
+
     setUploading(true);
     const formData = new FormData();
     formData.append("file", selectedFile);
@@ -26,6 +28,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
       const response = await fetch("http://localhost:3001/document/upload", {
         method: "POST",
         body: formData,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (response.ok) {
@@ -56,12 +61,15 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
     <div className="text-center">
       <h1 className="text-2xl font-bold text-gray-100 mb-4">Upload an Image</h1>
       <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-4 border-2 border-gray-700 bg-gray-800 rounded-lg shadow-sm justify-center">
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="p-2 border border-gray-600 rounded bg-gray-700 text-gray-100"
-        />
+        <label className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 cursor-pointer">
+          {selectedFile ? selectedFile.name : "Choose file"}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        </label>
         <button
           onClick={handleUpload}
           disabled={uploading}

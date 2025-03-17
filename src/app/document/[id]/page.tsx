@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import jsPDF from "jspdf";
@@ -12,6 +12,7 @@ import { Document, Message } from "../../../types/types";
 
 export default function DocumentDetails() {
   const params = useParams();
+  const router = useRouter();
   const imageId = params?.id as string;
   const [document, setDocument] = useState<Document | null>(null);
   const [loading, setLoading] = useState(true);
@@ -125,7 +126,11 @@ export default function DocumentDetails() {
 
   const fetchDocumentById = async (id: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/document/${id}`);
+      const response = await fetch(`http://localhost:3001/document/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
+        },
+      });
       if (!response.ok) throw new Error("Failed to fetch document");
 
       const data = await response.json();
@@ -152,13 +157,36 @@ export default function DocumentDetails() {
 
   const fetchMessages = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/message/${imageId}`);
+      const response = await fetch(`http://localhost:3001/message/${imageId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
+        },
+      });
       if (!response.ok) throw new Error("Failed to fetch messages");
       const data = await response.json();
       console.log('Received messages:', data);
       setMessages(data);
     } catch (error) {
       console.error("Error fetching messages:", error);
+    }
+  };
+
+  const handleDocumentDelete = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/document/delete/${imageId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to delete document");
+      }
+      router.push("/");
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      setError(error instanceof Error ? error.message : "Failed to delete document");
     }
   };
 
@@ -179,7 +207,10 @@ export default function DocumentDetails() {
     try {
       const response = await fetch(`http://localhost:3001/message/create/${imageId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("jwtToken")}`
+        },
         body: JSON.stringify({ content: newMessage, order: messages.length + 1 }),
       });
 
@@ -215,7 +246,7 @@ export default function DocumentDetails() {
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
-        <DocumentSection document={document} handleDownloadPDF={handleDownloadPDF} />
+        <DocumentSection document={document} handleDownloadPDF={handleDownloadPDF} handleDocumentDelete={handleDocumentDelete} />
         <ChatSection
           messages={messages}
           newMessage={newMessage}

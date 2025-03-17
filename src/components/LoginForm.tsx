@@ -24,14 +24,13 @@ const LoginForm: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem("jwtToken", data.access_token); // Save the token to localStorage
+        localStorage.setItem("jwtToken", data.access_token);
         router.push("/");
       } else {
         const data = await response.json();
         setError(data.message || "Invalid name or password.");
       }
     } catch (error) {
-      console.error("Error logging in:", error);
       setError("Error logging in.");
     } finally {
       setLoading(false);

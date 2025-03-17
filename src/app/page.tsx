@@ -16,23 +16,24 @@ export default function Home() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("jwtToken");
-    if (!token) {
+    const storedToken = localStorage.getItem("jwtToken");
+    if (!storedToken) {
       router.push("auth/login");
       return;
     }
-
-    fetchAllImages();
+    setToken(storedToken);
+    fetchAllImages(storedToken);
   }, []);
 
-  const fetchAllImages = async () => {
+  const fetchAllImages = async (token: string) => {
     try {
       const response = await fetch("http://localhost:3001/document/all", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       if (response.ok) {
@@ -54,7 +55,11 @@ export default function Home() {
   };
 
   if (loading) {
-    return <Loading message="Loading all documents..." />;
+    if (token) {
+      return <Loading message="Loading all documents..." />;
+    } else {
+      return <Loading message="Going to login page..." />;
+    }
   }
 
   if (error) {
@@ -64,7 +69,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-900 p-8">
       <main className="flex flex-col gap-8 items-center">
-        <FileUpload onUploadSuccess={fetchAllImages} />
+        <FileUpload onUploadSuccess={() => fetchAllImages(token!)} />
         <DocumentGallery documents={documents} onDocumentClick={handleDocumentClick} />
       </main>
     </div>
