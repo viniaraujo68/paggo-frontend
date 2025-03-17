@@ -126,7 +126,7 @@ export default function DocumentDetails() {
 
   const fetchDocumentById = async (id: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/document/${id}`, {
+      const response = await fetch(`https://paggo-backend.vercel.app/document/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
         },
@@ -157,7 +157,7 @@ export default function DocumentDetails() {
 
   const fetchMessages = useCallback(async () => {
     try {
-      const response = await fetch(`http://localhost:3001/message/${imageId}`, {
+      const response = await fetch(`https://paggo-backend.vercel.app/message/${imageId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
         },
@@ -173,7 +173,7 @@ export default function DocumentDetails() {
 
   const handleDocumentDelete = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/document/delete/${imageId}`, {
+      const response = await fetch(`https://paggo-backend.vercel.app/document/delete/${imageId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
@@ -205,7 +205,7 @@ export default function DocumentDetails() {
     setNewMessage("");
 
     try {
-      const response = await fetch(`http://localhost:3001/message/create/${imageId}`, {
+      const response = await fetch(`https://paggo-backend.vercel.app/message/create/${imageId}`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",

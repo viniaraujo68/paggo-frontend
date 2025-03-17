@@ -25,7 +25,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
     formData.append("file", selectedFile);
 
     try {
-      const response = await fetch("http://localhost:3001/document/upload", {
+      const response = await fetch("https://paggo-backend.vercel.app/document/upload", {
         method: "POST",
         body: formData,
         headers: {

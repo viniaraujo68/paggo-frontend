@@ -31,7 +31,7 @@ export default function Home() {
 
   const fetchAllImages = async (token: string) => {
     try {
-      const response = await fetch("http://localhost:3001/document/all", {
+      const response = await fetch("https://paggo-backend.vercel.app/document/all", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
