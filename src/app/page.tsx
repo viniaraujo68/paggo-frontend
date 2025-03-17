@@ -6,6 +6,8 @@ import FileUpload from "../components/FileUpload";
 import DocumentGallery from "../components/DocumentGallery";
 import Loading from "../components/Loading";
 import CustomError from "../components/CustomError";
+import { jwtDecode }from "jwt-decode";
+
 
 interface Document {
   id: string;
@@ -25,7 +27,24 @@ export default function Home() {
       router.push("auth/login");
       return;
     }
+
+    try {
+      const decodedToken: any = jwtDecode(storedToken);
+      const currentTime = Date.now() / 1000;
+      if (decodedToken.exp < currentTime) {
+        localStorage.removeItem("jwtToken");
+        router.push("auth/login");
+        return;
+      }
+    } catch (error) {
+      console.error("Invalid token:", error);
+      localStorage.removeItem("jwtToken");
+      router.push("auth/login");
+      return;
+    }
+
     setToken(storedToken);
+    console.log("Stored token:", storedToken);
     fetchAllImages(storedToken);
   }, [router]);
 
