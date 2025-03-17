@@ -14,7 +14,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onClick }) => {
       key={document.id}
       onClick={() => onClick(document.id)}
       className="relative group w-full h-0 pb-[141.4%] p-2 border-2 border-gray-700 bg-gray-800 rounded-lg shadow-sm hover:shadow-md hover:border-blue-200 transition-all duration-200 ease-in-out cursor-pointer overflow-hidden"
-      style={{ aspectRatio: '1/1.414' }} // A4 ratio (1:√2)
+      style={{ aspectRatio: '1/1.414' }}
     >
       <div className="absolute inset-0 flex items-center justify-center p-2">
         <Image 

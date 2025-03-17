@@ -164,7 +164,6 @@ export default function DocumentDetails() {
       });
       if (!response.ok) throw new Error("Failed to fetch messages");
       const data = await response.json();
-      console.log('Received messages:', data);
       setMessages(data);
     } catch (error) {
       console.error("Error fetching messages:", error);

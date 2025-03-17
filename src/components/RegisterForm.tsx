@@ -32,7 +32,6 @@ const RegisterForm: React.FC = () => {
         router.push("./login");
       } else {
         const data = await response.json();
-        console.log("Registration error:", data);
         setError(data.message || "Failed to register.");
       }
     } catch (error) {
