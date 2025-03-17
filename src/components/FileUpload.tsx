@@ -25,7 +25,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
     formData.append("file", selectedFile);
 
     try {
-      const response = await fetch("https://paggo-backend.onrender.com/document/upload", {
+      const response = await fetch(`${process.env.API_URL}/document/upload`, {
         method: "POST",
         body: formData,
         headers: {
