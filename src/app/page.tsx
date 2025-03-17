@@ -6,8 +6,8 @@ import FileUpload from "../components/FileUpload";
 import DocumentGallery from "../components/DocumentGallery";
 import Loading from "../components/Loading";
 import CustomError from "../components/CustomError";
-import { jwtDecode }from "jwt-decode";
-
+import LogoutButton from "../components/LogoutButton";
+import { jwtDecode } from "jwt-decode";
 
 interface Document {
   id: string;
@@ -87,6 +87,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
+      <header className="flex justify-end mb-4">
+        <LogoutButton />
+      </header>
       <main className="flex flex-col gap-8 items-center">
         <FileUpload onUploadSuccess={() => fetchAllImages(token!)} />
         <DocumentGallery documents={documents} onDocumentClick={handleDocumentClick} />

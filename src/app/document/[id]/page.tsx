@@ -8,6 +8,7 @@ import DocumentSection from "../../../components/DocumentSection";
 import ChatSection from "../../../components/ChatSection";
 import Loading from "../../../components/Loading";
 import CustomError from "../../../components/CustomError";
+import LogoutButton from "../../../components/LogoutButton";
 import { Document, Message } from "../../../types/types";
 
 export default function DocumentDetails() {
@@ -237,12 +238,15 @@ export default function DocumentDetails() {
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
-      <Link
-        href="/"
-        className="mb-6 inline-flex items-center gap-2 text-gray-400 hover:text-gray-200 transition-colors"
-      >
-        ← Back to Documents
-      </Link>
+      <header className="flex justify-between mb-6">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-gray-400 hover:text-gray-200 transition-colors"
+        >
+          ← Back to Documents
+        </Link>
+        <LogoutButton />
+      </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
         <DocumentSection document={document} handleDownloadPDF={handleDownloadPDF} handleDocumentDelete={handleDocumentDelete} />
