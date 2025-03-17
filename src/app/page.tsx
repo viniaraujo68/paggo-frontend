@@ -14,6 +14,10 @@ interface Document {
   imageUrl: string;
 }
 
+interface DecodedToken {
+  exp: number;
+}
+
 export default function Home() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +33,7 @@ export default function Home() {
     }
 
     try {
-      const decodedToken: any = jwtDecode(storedToken);
+      const decodedToken: DecodedToken = jwtDecode<DecodedToken>(storedToken);
       const currentTime = Date.now() / 1000;
       if (decodedToken.exp < currentTime) {
         localStorage.removeItem("jwtToken");
