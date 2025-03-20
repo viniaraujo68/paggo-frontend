@@ -48,7 +48,6 @@ export default function Home() {
     }
 
     setToken(storedToken);
-    console.log("Stored token:", storedToken);
     fetchAllImages(storedToken);
   }, [router]);
 
